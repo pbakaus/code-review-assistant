@@ -1,0 +1,26 @@
+{
+  "name": "code-review-assistant-demo",
+  "version": "1.0.0",
+  "description": "Demo of Claude Agent SDK and Skills for automated code review",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node --loader ts-node/esm src/index.ts",
+    "build": "tsc",
+    "dev": "node --loader ts-node/esm --watch src/index.ts"
+  },
+  "keywords": ["code-review", "agent-sdk", "claude", "github"],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "latest",
+    "@octokit/rest": "^20.0.2",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
+
