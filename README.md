@@ -111,26 +111,6 @@ for await (const message of query({
 }
 ```
 
-## Features Demonstrated
-
-### Agent SDK
-- ✅ Loading custom skills from local filesystem
-- ✅ Streaming responses for real-time output
-- ✅ Environment isolation with `settingSources`
-- ✅ Type-safe TypeScript implementation
-
-### Skills
-- ✅ Dual-mode operation (standalone + SDK)
-- ✅ Progressive disclosure (loads only what's needed)
-- ✅ Dynamic tool usage (GitHub CLI, Node scripts)
-- ✅ External API integration (Gemini, Cloudinary)
-
-### Real-World Integration
-- ✅ GitHub API (Octokit) for PR data
-- ✅ GitHub CLI for standalone mode
-- ✅ Gemini API for diagram generation
-- ✅ Cloudinary for image hosting
-
 ## Customization
 
 ### For Your Team
@@ -180,24 +160,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-## Demo Script (5-Minute Video)
-
-### Act 1: The Problem (30s)
-"Code reviews are time-consuming. Assigning reviewers, catching mistakes, explaining complex changes—it all adds up."
-
-### Act 2: The Skill (90s)
-Show the skill structure: SKILL.md, reference files, scripts. Explain progressive disclosure and dual-mode operation.
-
-### Act 3: Live Demo (120s)
-Run the agent on a real PR:
-- Watch reviewer assignment with reasoning
-- See it flag a useEffect anti-pattern
-- Show generated diagram for webhook flow
-- Review posted to GitHub
-
-### Act 4: The Value (30s)
-"Skills are portable. Same code, many contexts. Agent SDK gives programmatic control. Real productivity gains. Easy to customize."
-
 ## Troubleshooting
 
 **"ANTHROPIC_API_KEY is not set"**: Create `.env` file with your API key
@@ -218,11 +180,3 @@ Run the agent on a real PR:
 ## License
 
 Apache 2.0 - See LICENSE.txt
-
-## Acknowledgments
-
-Created for the Claude Developer Platform demo challenge, demonstrating:
-- Anthropic's Claude Agent SDK
-- Agent Skills architecture
-- Real-world AI agent patterns
-
