@@ -88,7 +88,8 @@ Claude will automatically:
 - Fetch PR using GitHub CLI
 - Analyze changes against your team's standards
 - Generate diagrams for complex logic
-- Post review comment to GitHub
+- Offer to auto-assign reviewers via `gh pr edit`
+- Offer to post review comment to GitHub via `gh pr comment`
 
 ### Mode 2: Programmatic with Agent SDK
 
@@ -116,6 +117,8 @@ for await (const message of query({
 ### For Your Team
 
 1. **Update team expertise**: Edit `.claude/skills/code-review-assistant/reference/team-expertise.md`
+   - Add your team members with their GitHub usernames (e.g., `@username`)
+   - List their areas of expertise
 2. **Add your standards**: Edit `code-standards.md` and `code-standards-map.md`
 3. **Customize output**: Modify the "Output Format" section in `SKILL.md`
 
@@ -125,6 +128,32 @@ The skill adapts to different technologies:
 - **Vue/Angular**: Update pattern matching in code-standards.md
 - **Python/Django**: Add Python-specific concerns
 - **Go/Rust**: Adjust file patterns and detection logic
+
+## Interactive Features
+
+The skill offers interactive post-review actions powered by [GitHub CLI](https://cli.github.com/manual/gh_pr_edit):
+
+### Auto-Assign Reviewers
+
+After the review, the skill will ask if you want to automatically assign the recommended reviewers:
+
+```bash
+gh pr edit <number> --add-reviewer username1,username2,username3
+```
+
+This uses the GitHub usernames from your `team-expertise.md` file and the reviewer recommendations.
+
+### Post Review as Comment
+
+The skill can also post the full review as a PR comment:
+
+```bash
+gh pr comment <number> --body-file review.md
+```
+
+This makes the review visible to the entire team directly on GitHub.
+
+**Note**: Both actions require GitHub CLI to be installed and authenticated. The skill will only offer these options when a PR number is available.
 
 ## Development
 

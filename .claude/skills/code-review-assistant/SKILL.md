@@ -1,12 +1,12 @@
 ---
 name: code-review-assistant
-description: Comprehensive PR analysis with reviewer assignment, concern detection, and visual explanation generation. Automatically assigns reviewers based on expertise, flags potential issues against company standards, and generates visual explanations for complex code.
+description: Analyze pull requests with intelligent reviewer assignment, code quality detection, and visual explanations. Use this skill when the user asks to review, analyze, or evaluate a PR, code changes, or pull request. Automatically identifies the right reviewers, flags potential issues against coding standards, and generates architectural diagrams for complex changes.
 allowed-tools: [Bash, Read, Write, Grep, Glob, WebFetch]
 ---
 
 # Code Review Assistant
 
-Analyzes a pull request to assign reviewers, detect code issues, and visually explain complex changes.
+Analyzes a pull request to assign reviewers, detect code issues, and visually explain complex changes. Can automatically assign reviewers via GitHub CLI and post review comments.
 
 **Setup**: Run `bash scripts/setup.sh` to check environment and install dependencies.
 
@@ -43,7 +43,7 @@ If `gh` not installed: https://cli.github.com/
 [Title, author, files changed summary]
 
 ## 👥 Recommended Reviewers
-- **Name** (Expertise) - Why they should review
+- **@username** (Name) - Expertise areas that match this PR
 
 ## ⚠️ Areas of Concern
 - 🔴/🟡/🔵 **Issue Title**
@@ -57,13 +57,31 @@ If `gh` not installed: https://cli.github.com/
 [Strengths, required changes, recommendation]
 ```
 
+## Post-Review Actions
+
+After presenting the review summary, ask the user if they want to:
+
+1. **Auto-assign reviewers** (if PR number/URL is available):
+   ```bash
+   gh pr edit <number> --add-reviewer username1,username2,username3
+   ```
+   Use the GitHub usernames from the recommended reviewers list.
+   Reference: https://cli.github.com/manual/gh_pr_edit
+
+2. **Post review as PR comment** (if PR number/URL is available):
+   ```bash
+   gh pr comment <number> --body-file <review-file.md>
+   ```
+   Save the full review markdown to a temporary file first, then post it.
+
+**Important**: Only offer these actions if you have the PR number or URL available. Ask for user confirmation before executing either command.
+
 ## Reference Files
 
 Progressive disclosure - only load what you need:
-- `reference/team-expertise.md` - Team member expertise areas
+- `reference/team-expertise.md` - Team member expertise areas with GitHub usernames
 - `reference/code-standards-map.md` - Quick list of detectable issues (check this first)
 - `reference/code-standards.md` - Full issue details with XML tags (grep specific sections)
-- `reference/examples.md` - Example reviews and patterns
 
 ## Scripts
 
