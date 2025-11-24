@@ -1,257 +1,180 @@
 #!/usr/bin/env node
 
 /**
- * Code Review Agent CLI
+ * Interactive CLI for PR code reviews
  *
- * Uses the Anthropic Agent SDK to analyze pull requests with the code-review-assistant skill
+ * Usage: ./agent <pr-identifier> [--non-interactive]
  */
 
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { stdin, stdout } from "node:process";
+import * as readline from "node:readline/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { config } from "dotenv";
-import { formatPRDataForAgent, GitHubClient } from "./github.js";
-import type { AgentMessage, CLIOptions } from "./types.js";
+import type { MarkedExtension } from "marked";
+import { marked } from "marked";
+import { markedTerminal } from "marked-terminal";
+import { extractReviewers, formatPRForAgent, GitHubClient } from "./github.js";
 
-// Load environment variables
 config();
+marked.use(markedTerminal({
+	reflowText: true,
+	tab: 2
+}) as MarkedExtension);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const args = process.argv.slice(2);
+const prIdentifier = args.find((arg) => !arg.startsWith("--"));
+const isInteractive = !args.includes("--non-interactive");
+const forceDiagrams = args.includes("--force-diagrams");
 
-// Parse CLI arguments with modern patterns
-function parseArgs(): CLIOptions {
-	const args = process.argv.slice(2);
+if (!prIdentifier || args.some((arg) => ["-h", "--help"].includes(arg))) {
+	console.log(`
+Code Review Agent
 
-	const options: CLIOptions = {
-		pr: "",
-		postComment: false,
-		help: false,
-	};
-
-	for (let i = 0; i < args.length; i++) {
-		const arg = args[i];
-		if (!arg) continue;
-
-		switch (arg) {
-			case "--help":
-			case "-h":
-				options.help = true;
-				break;
-			case "--pr": {
-				const nextArg = args[++i];
-				if (nextArg) options.pr = nextArg;
-				break;
-			}
-			case "--post-comment":
-				options.postComment = true;
-				break;
-			default:
-				// Assume it's the PR identifier if no --pr flag
-				if (!arg.startsWith("-") && !options.pr) {
-					options.pr = arg;
-				}
-		}
-	}
-
-	return options;
-}
-
-const HELP_TEXT = `
-Code Review Agent - Automated PR Analysis
-
-Usage:
-  npm start -- --pr <pr-identifier> [options]
-
-Arguments:
-  --pr <identifier>    PR to review. Formats:
-                       - https://github.com/owner/repo/pull/123
-                       - owner/repo#123
-                       - owner/repo/pull/123
-
-Options:
-  --post-comment       Post the review as a comment on the PR
-  --help, -h           Show this help message
+Usage: ./agent <pr-identifier> [options]
 
 Examples:
-  # Analyze a PR
-  npm start -- --pr "facebook/react#12345"
+  ./agent facebook/react#12345
+  ./agent owner/repo#123 --non-interactive
+  ./agent https://github.com/owner/repo/pull/123 --force-diagrams
 
-  # Analyze and post review comment
-  npm start -- --pr "https://github.com/owner/repo/pull/123" --post-comment
-
-Environment Variables:
-  ANTHROPIC_API_KEY    Required - Your Anthropic API key
-  GITHUB_TOKEN         Required - GitHub personal access token
-  GEMINI_API_KEY       Optional - For diagram generation
-  CLOUDINARY_*         Optional - For image uploads
-
-Setup:
-  1. Copy .env.example to .env
-  2. Add your API keys
-  3. Run: npm install
-  4. Run: npm start -- --pr "owner/repo#123"
-`;
-
-function validateEnvironment(): void {
-	const requiredVars = [
-		{
-			key: "ANTHROPIC_API_KEY",
-			url: "https://console.anthropic.com/",
-			placeholder: "your_anthropic_api_key_here",
-		},
-		{
-			key: "GITHUB_TOKEN",
-			url: "https://github.com/settings/tokens",
-			placeholder: "your_github_token_here",
-		},
-	] as const;
-
-	for (const { key, url, placeholder } of requiredVars) {
-		const value = process.env[key];
-		if (!value || value === placeholder) {
-			console.error(`Error: ${key} is not set`);
-			console.error(`Get your API key from: ${url}`);
-			process.exit(1);
-		}
-	}
+Options:
+  --non-interactive    Skip prompts (for CI/CD)
+  --force-diagrams     Always generate visual diagrams
+  -h, --help          Show this help
+`);
+	process.exit(prIdentifier ? 0 : 1);
 }
 
 const SYSTEM_PROMPT = `You are a code review assistant analyzing a GitHub pull request.
 
 Use the code-review-assistant skill to:
-1. Assign appropriate reviewers based on the code changes
-2. Detect potential issues against company coding standards
-3. Generate visual explanations for complex changes if needed
+1. Recommend appropriate reviewers based on code changes
+2. Detect issues against coding standards
+3. Generate visual explanations for complex changes
 4. Provide a comprehensive review
 
-Be thorough but concise. Focus on actionable feedback.`;
+Be thorough but concise. Focus on actionable feedback.
 
-async function runReview(
-	prIdentifier: string,
-	skillPath: string,
-	githubToken: string,
-): Promise<string> {
-	const github = new GitHubClient(githubToken);
-	const prData = await github.fetchPR(prIdentifier);
+IMPORTANT: ${forceDiagrams ? "ALWAYS generate visual diagrams for this PR, regardless of complexity." : ""}
+Do NOT ask about auto-assigning reviewers or posting comments.
+The agent handles these actions. Simply present the final review.`;
 
-	console.log();
+async function main() {
+	const token = process.env.GITHUB_TOKEN;
+	if (!token) throw new Error("GITHUB_TOKEN environment variable required");
+
+	if (!prIdentifier) throw new Error("PR identifier is required");
+
+	const github = new GitHubClient(token);
+	const pr = await github.fetchPR(prIdentifier);
+
 	console.log("=".repeat(80));
-	console.log("Initializing AI Review with Claude Agent SDK");
+	console.log(`Analyzing PR #${pr.number}: ${pr.title}`);
 	console.log("=".repeat(80));
 	console.log();
-
-	const prDataFormatted = formatPRDataForAgent(prData);
-
-	console.log(`Using skill: ${skillPath}\n`);
 
 	let fullReview = "";
-	let hasError = false;
 
 	for await (const message of query({
-		prompt: `Please review this pull request using the code-review-assistant skill:\n\n${prDataFormatted}`,
+		prompt: `Please review this pull request:\n\n${formatPRForAgent(pr)}`,
 		options: {
-			plugins: [{ type: "local", path: skillPath }],
-			settingSources: [], // Isolation
+			settingSources: ["user", "project"],
+			allowedTools: [
+				"Skill",
+				"Bash",
+				"Read",
+				"Write",
+				"Grep",
+				"Glob",
+				"WebFetch",
+			],
 			systemPrompt: SYSTEM_PROMPT,
-			model: "claude-sonnet-4-20250514",
-			includePartialMessages: false,
+			model: "claude-haiku-4-5",
 			env: process.env as Record<string, string>,
 		},
 	})) {
-		const msg = message as AgentMessage;
-
-		// Handle streaming messages with proper type checking
-		if (msg.type === "text" && msg.text) {
-			process.stdout.write(msg.text);
-			fullReview += msg.text;
-		} else if (msg.type === "tool_use" && msg.name) {
-			console.log(`\n[Using tool: ${msg.name}]`);
-		} else if (msg.type === "error" && msg.error) {
-			console.error("\n\nError during review:", msg.error);
-			hasError = true;
-		}
-	}
-
-	if (hasError) {
-		console.log("\n\n⚠️  Review completed with errors");
-		process.exit(1);
-	}
-
-	return fullReview;
-}
-
-async function main(): Promise<void> {
-	const options = parseArgs();
-
-	if (options.help) {
-		console.log(HELP_TEXT);
-		process.exit(0);
-	}
-
-	if (!options.pr) {
-		console.error("Error: PR identifier is required\n");
-		console.log(HELP_TEXT);
-		process.exit(1);
-	}
-
-	validateEnvironment();
-
-	const githubToken = process.env.GITHUB_TOKEN as string;
-
-	try {
-		console.log("=".repeat(80));
-		console.log("Code Review Agent - Starting Analysis");
-		console.log("=".repeat(80));
-		console.log();
-
-		const skillPath = resolve(
-			__dirname,
-			"../.claude/skills/code-review-assistant",
-		);
-
-		const fullReview = await runReview(options.pr, skillPath, githubToken);
-
-		console.log("\n\n" + "=".repeat(80));
-		console.log("Review Complete");
-		console.log("=".repeat(80));
-
-		// Optionally post comment
-		if (options.postComment) {
-			console.log("\nPosting review as PR comment...");
-
-			try {
-				const github = new GitHubClient(githubToken);
-				await github.postComment(options.pr, fullReview);
-				console.log("✓ Review posted successfully!");
-			} catch (error) {
-				const err = error as Error;
-				console.error("✗ Failed to post comment:", err.message);
-				console.log("\nReview content (save manually if needed):");
-				console.log("-".repeat(80));
-				console.log(fullReview);
-				console.log("-".repeat(80));
-				process.exit(1);
+		if (
+			(message.type === "assistant") &&
+			message.message
+		) {
+			const content = message.message.content.find(
+				(c: { type: string }) => c.type === "text",
+			);
+			if (content && "text" in content) {
+				const text = (content as { text: string }).text;
+				if (!text.includes("## 🤖 Claude PR Assessment")) {
+					process.stdout.write(text.endsWith("\n") ? text : text + "\n");
+				}
 			}
 		}
 
-		console.log("\n✓ Analysis complete!");
-	} catch (error) {
-		const err = error as Error;
-		console.error("\n✗ Error:", err.message);
-
-		if (err.stack) {
-			console.error("\nStack trace:");
-			console.error(err.stack);
+		if (message.type === "result" && "result" in message) {
+			fullReview = message.result as string;
 		}
+	}
 
-		process.exit(1);
+	if (!fullReview) return;
+
+	const summaryStart = fullReview.indexOf("## 🤖 Claude PR Assessment");
+	const review =
+		summaryStart !== -1 ? fullReview.substring(summaryStart) : fullReview;
+
+	console.log("\n\n" + "=".repeat(80));
+	console.log("Review Complete");
+	console.log("=".repeat(80));
+	console.log(marked.parse(review));
+
+	const reviewers = extractReviewers(fullReview);
+	if (isInteractive && reviewers.length > 0) {
+		await promptActions(github, pr.number, reviewers, review);
 	}
 }
 
-// Run the CLI
-main().catch((error: Error) => {
-	console.error("Unexpected error:", error);
+async function promptActions(
+	github: GitHubClient,
+	prNumber: number,
+	reviewers: string[],
+	review: string,
+) {
+	const rl = readline.createInterface({ input: stdin, output: stdout });
+
+	try {
+		console.log("\n" + "─".repeat(80));
+		console.log(
+			`\n✓ Found ${reviewers.length} reviewer${reviewers.length > 1 ? "s" : ""}: ${reviewers.map((r) => `@${r}`).join(", ")}`,
+		);
+
+		const assignAnswer = await rl.question(
+			"\nAuto-assign these reviewers? (y/N): ",
+		);
+		if (
+			assignAnswer.toLowerCase() === "y" ||
+			assignAnswer.toLowerCase() === "yes"
+		) {
+			console.log(`\n▶ Assigning reviewers...`);
+			await github.assignReviewers(prNumber, reviewers);
+			console.log(`✓ Assigned: ${reviewers.map((r) => `@${r}`).join(", ")}`);
+		}
+
+		const commentAnswer = await rl.question(
+			"\nPost review as PR comment? (y/N): ",
+		);
+		if (
+			commentAnswer.toLowerCase() === "y" ||
+			commentAnswer.toLowerCase() === "yes"
+		) {
+			console.log(`\n▶ Posting comment...`);
+			await github.postComment(prNumber, review);
+			console.log(`✓ Comment posted to PR #${prNumber}`);
+		}
+
+		console.log();
+	} finally {
+		rl.close();
+	}
+}
+
+main().catch((error) => {
+	console.error("\n✗ Error:", error.message);
 	process.exit(1);
 });
-

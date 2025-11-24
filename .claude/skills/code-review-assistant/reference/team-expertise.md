@@ -1,8 +1,8 @@
 # Team Expertise
 
-Customize this file with your actual team members and their areas of expertise.
+Customize this file with your actual team members and their GitHub usernames.
 
-## Alex Chen - Frontend Specialist
+## Alex Chen (@alexchen)
 
 **Expertise:**
 - React, hooks, and component architecture
@@ -10,7 +10,7 @@ Customize this file with your actual team members and their areas of expertise.
 - Frontend performance optimization
 - UI/UX implementation and accessibility
 
-## Jordan Smith - Backend & Payments
+## Jordan Smith (@jordansmith)
 
 **Expertise:**
 - Node.js, Express, API design
@@ -18,7 +18,7 @@ Customize this file with your actual team members and their areas of expertise.
 - Event-driven architecture
 - Database design and optimization
 
-## Casey Martinez - DevOps & Infrastructure
+## Casey Martinez (@caseymartinez)
 
 **Expertise:**
 - AWS cloud services and infrastructure
@@ -27,7 +27,7 @@ Customize this file with your actual team members and their areas of expertise.
 - Database migrations and schema management
 - Monitoring and observability
 
-## Sam Rodriguez - Security & Compliance
+## Sam Rodriguez (@samrodriguez)
 
 **Expertise:**
 - Application security and penetration testing
@@ -35,7 +35,7 @@ Customize this file with your actual team members and their areas of expertise.
 - Data privacy and compliance (GDPR, SOC2)
 - Secure coding practices and code review
 
-## Taylor Kim - Full Stack Generalist
+## Taylor Kim (@taylorkim)
 
 **Expertise:**
 - Broad knowledge across frontend and backend
@@ -43,7 +43,7 @@ Customize this file with your actual team members and their areas of expertise.
 - Technical debt management and refactoring
 - Mentoring and code quality standards
 
-## Morgan Lee - Mobile Development
+## Morgan Lee (@morganlee)
 
 **Expertise:**
 - React Native and mobile app architecture

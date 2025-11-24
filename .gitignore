@@ -7,6 +7,9 @@ dist/
 .DS_Store
 .cursor/
 
+# Temporary review files
+.review-*.md
+
 # Ignore generated diagrams but keep README
 .claude/skills/code-review-assistant/diagrams/*
 !.claude/skills/code-review-assistant/diagrams/README.md

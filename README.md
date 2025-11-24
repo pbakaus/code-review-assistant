@@ -1,22 +1,14 @@
-# Code Review Assistant Demo
+# Code Review Assistant
 
-A demonstration of Anthropic's Claude Agent SDK and Skills, showcasing intelligent automated code review with reviewer assignment, concern detection, and AI-generated visual explanations.
+This is a code review assistant skill and bundled CLI agent. Rather than reviewing the code entirely on its own, it's serving as an intelligent companion to a reviewer, by providing the following:
 
-## What Makes This Demo Special
+1. Automatic matching of reviewers on your team based on their expertise
+2. First code review pass based on team-specific code patterns and concerns
+3. Visual explanation of complex architectural changes (feat. Nano Banana Pro)
 
-**Portable Skill**: The code-review-assistant skill works everywhere:
-- Drop in any repo for standalone use in Claude Code
-- Use programmatically via Agent SDK
-- Integrate into CI/CD pipelines
+## How to Use
 
-**Intelligent Analysis**: Contextual understanding, not just pattern matching:
-- Smart reviewer assignment based on code changes
-- Detection of subtle issues (race conditions, security risks)
-- Visual explanations for complex logic
-
-## Quick Start
-
-### 1. Install & Configure
+### Setup
 
 ```bash
 npm install
@@ -31,48 +23,34 @@ Required API keys:
 - **Gemini** (optional): https://makersuite.google.com/app/apikey
 - **Cloudinary** (optional): https://cloudinary.com/console/settings/api
 
-### 2. Run
+### Option 1: CLI Agent (Automation & CI/CD)
+
+Use the bundled agent for automated reviews on any PR:
 
 ```bash
-# Review a public PR
-npm start -- --pr "facebook/react#28000"
+# Interactive mode (default) - prompts for actions after review
+./agent facebook/react#28000
 
-# Review and post comment (use with caution!)
-npm start -- --pr "owner/repo#123" --post-comment
+# Non-interactive mode (for CI/CD)
+./agent facebook/react#28000 --non-interactive
+
+# Force diagram generation for all PRs
+./agent facebook/react#28000 --force-diagrams
 ```
 
-## Project Structure
+**CLI Options:**
+- `--non-interactive`: Skip prompts (for CI/CD pipelines)
+- `--force-diagrams`: Always generate visual diagrams, even for simple PRs
 
-```
-.
-├── .claude/skills/code-review-assistant/   # The reusable skill
-│   ├── SKILL.md                            # Main skill definition
-│   ├── reference/                          # Knowledge base
-│   │   ├── team-expertise.md               # Team member expertise
-│   │   ├── code-standards-map.md           # Quick issue reference
-│   │   └── code-standards.md               # Detailed standards
-│   ├── scripts/                            # Utility scripts
-│   │   ├── generate-diagram.js             # AI diagram generation (Gemini)
-│   │   ├── upload-image.js                 # Image hosting (Cloudinary)
-│   │   ├── setup.sh                        # Setup helper
-│   │   └── package.json                    # Script dependencies
-│   └── diagrams/                           # Generated diagrams
-│
-├── src/                                    # Agent SDK implementation
-│   ├── index.ts                            # Main CLI agent
-│   ├── github.ts                           # GitHub integration
-│   └── types.ts                            # Type definitions
-│
-├── package.json                            # Project dependencies
-├── tsconfig.json                           # TypeScript config
-└── .env                                    # API keys (create from .env.example)
-```
+**Interactive Mode** (default): After the review, you'll be prompted to:
+- Auto-assign the recommended reviewers via `gh pr edit`
+- Post the review as a PR comment via `gh pr comment`
 
-## Two Ways to Use
+**Non-Interactive Mode**: Just displays the review and exits (perfect for CI/CD pipelines).
 
-### Mode 1: Standalone in Claude Code
+### Option 2: Claude Code (Ad-Hoc Reviews)
 
-Perfect for ad-hoc reviews during development:
+Use the skill directly in Claude Code for quick reviews during development:
 
 1. Copy skill to your project:
    ```bash
@@ -81,18 +59,19 @@ Perfect for ad-hoc reviews during development:
 
 2. In Claude Code, ask:
    ```
-   Review the current PR using code-review-assistant
+   Review the current PR
    ```
 
 Claude will automatically:
 - Fetch PR using GitHub CLI
 - Analyze changes against your team's standards
 - Generate diagrams for complex logic
-- Post review comment to GitHub
+- Offer to auto-assign reviewers via `gh pr edit`
+- Offer to post the review as a comment via `gh pr comment`
 
-### Mode 2: Programmatic with Agent SDK
+### Option 3: Agent SDK (Programmatic)
 
-Perfect for automation and CI/CD:
+Use the skill programmatically in your own code:
 
 ```typescript
 import { query } from '@anthropic-ai/claude-agent-sdk';
@@ -100,129 +79,33 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
 for await (const message of query({
   prompt: `Review this PR: ${prData}`,
   options: {
-    plugins: [{ 
-      type: 'local', 
-      path: './.claude/skills/code-review-assistant' 
-    }],
-    model: 'claude-sonnet-4-20250514'
+    settingSources: ["user", "project"], // Load skills from filesystem
+    allowedTools: ["Skill", "Bash", "Read", "Write", "Grep", "Glob", "WebFetch"],
   }
 })) {
   console.log(message);
 }
 ```
 
-## Features Demonstrated
-
-### Agent SDK
-- ✅ Loading custom skills from local filesystem
-- ✅ Streaming responses for real-time output
-- ✅ Environment isolation with `settingSources`
-- ✅ Type-safe TypeScript implementation
-
-### Skills
-- ✅ Dual-mode operation (standalone + SDK)
-- ✅ Progressive disclosure (loads only what's needed)
-- ✅ Dynamic tool usage (GitHub CLI, Node scripts)
-- ✅ External API integration (Gemini, Cloudinary)
-
-### Real-World Integration
-- ✅ GitHub API (Octokit) for PR data
-- ✅ GitHub CLI for standalone mode
-- ✅ Gemini API for diagram generation
-- ✅ Cloudinary for image hosting
-
 ## Customization
 
-### For Your Team
-
 1. **Update team expertise**: Edit `.claude/skills/code-review-assistant/reference/team-expertise.md`
+   - Add your team members with their GitHub usernames (e.g., `@username`)
+   - List their areas of expertise
 2. **Add your standards**: Edit `code-standards.md` and `code-standards-map.md`
 3. **Customize output**: Modify the "Output Format" section in `SKILL.md`
 
-### For Your Tech Stack
-
-The skill adapts to different technologies:
-- **Vue/Angular**: Update pattern matching in code-standards.md
-- **Python/Django**: Add Python-specific concerns
-- **Go/Rust**: Adjust file patterns and detection logic
-
-## Development
-
-```bash
-# Run in dev mode (with watch)
-npm run dev -- --pr "owner/repo#123"
-
-# Build
-npm run build
-
-# Run tests
-npm start -- --pr "facebook/react#28000"
-```
-
-## CI/CD Integration Example
-
-```yaml
-name: Auto Review
-on: pull_request
-
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm install
-      - run: npm start -- --pr "${{ github.repository }}#${{ github.event.pull_request.number }}" --post-comment
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
-
-## Demo Script (5-Minute Video)
-
-### Act 1: The Problem (30s)
-"Code reviews are time-consuming. Assigning reviewers, catching mistakes, explaining complex changes—it all adds up."
-
-### Act 2: The Skill (90s)
-Show the skill structure: SKILL.md, reference files, scripts. Explain progressive disclosure and dual-mode operation.
-
-### Act 3: Live Demo (120s)
-Run the agent on a real PR:
-- Watch reviewer assignment with reasoning
-- See it flag a useEffect anti-pattern
-- Show generated diagram for webhook flow
-- Review posted to GitHub
-
-### Act 4: The Value (30s)
-"Skills are portable. Same code, many contexts. Agent SDK gives programmatic control. Real productivity gains. Easy to customize."
-
-## Troubleshooting
-
-**"ANTHROPIC_API_KEY is not set"**: Create `.env` file with your API key
-
-**"PR not found"**: Check repository access and PR number
-
-**"Module not found"**: Run `npm install`
-
-**Diagram generation fails**: Ensure `GEMINI_API_KEY` is set and run `bash .claude/skills/code-review-assistant/scripts/setup.sh`
-
 ## Resources
 
+- [Introducing Agent Skills](https://www.claude.com/blog/skills)
+- [Agent Skills in Claude Code](https://code.claude.com/docs/en/skills)
+- [Anthropic sample skills](https://github.com/anthropics/skills)
 - [Agent SDK Documentation](https://platform.claude.com/docs/en/agent-sdk/typescript)
 - [Agent Skills Guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 - [Skills Engineering Blog](https://anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
-- [GitHub Octokit](https://github.com/octokit/rest.js)
+- [GitHub CLI](https://cli.github.com/) - Used for reviewer assignment and posting comments
+- [GitHub Octokit](https://github.com/octokit/rest.js) - Used for fetching PR metadata
 
 ## License
 
 Apache 2.0 - See LICENSE.txt
-
-## Acknowledgments
-
-Created for the Claude Developer Platform demo challenge, demonstrating:
-- Anthropic's Claude Agent SDK
-- Agent Skills architecture
-- Real-world AI agent patterns
-
