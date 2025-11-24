@@ -97,6 +97,9 @@ for await (const message of query({
 
 ## Resources
 
+- [Introducing Agent Skills](https://www.claude.com/blog/skills)
+- [Agent Skills in Claude Code](https://code.claude.com/docs/en/skills)
+- [Anthropic sample skills](https://github.com/anthropics/skills)
 - [Agent SDK Documentation](https://platform.claude.com/docs/en/agent-sdk/typescript)
 - [Agent Skills Guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 - [Skills Engineering Blog](https://anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)

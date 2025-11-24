@@ -37,7 +37,31 @@ export class GitHubClient {
 			}),
 		]);
 
-		const diff = files
+		// Filter out large generated files to reduce token usage
+		const shouldIncludeFile = (filename: string): boolean => {
+			const excludePatterns = [
+				/package-lock\.json$/,
+				/yarn\.lock$/,
+				/pnpm-lock\.yaml$/,
+				/composer\.lock$/,
+				/Gemfile\.lock$/,
+				/Cargo\.lock$/,
+				/poetry\.lock$/,
+				/\.min\.(js|css)$/,
+				/\.bundle\.(js|css)$/,
+				/dist\//,
+				/build\//,
+				/\.next\//,
+				/\.nuxt\//,
+				/coverage\//,
+			];
+			return !excludePatterns.some(pattern => pattern.test(filename));
+		};
+
+		const filteredFiles = files.filter(f => shouldIncludeFile(f.filename));
+		const skippedCount = files.length - filteredFiles.length;
+
+		const diff = filteredFiles
 			.filter((f) => f.patch)
 			.map((f) => `diff --git a/${f.filename} b/${f.filename}\n${f.patch}`)
 			.join("\n\n");
@@ -48,7 +72,7 @@ export class GitHubClient {
 			body: pr.body ?? "",
 			author: pr.user?.login ?? "unknown",
 			url: pr.html_url,
-			files: files.map((f) => ({
+			files: filteredFiles.map((f) => ({
 				filename: f.filename,
 				status: f.status as PRFile["status"],
 				additions: f.additions,
@@ -56,7 +80,9 @@ export class GitHubClient {
 				changes: f.changes,
 				patch: f.patch,
 			})),
-			diff,
+			diff: skippedCount > 0 
+				? `Note: Skipped ${skippedCount} generated/build file(s) from diff.\n\n${diff}`
+				: diff,
 		};
 	}
 
