@@ -6,6 +6,10 @@ This is a code review assistant skill and bundled CLI agent. Rather than reviewi
 2. First code review pass based on team-specific code patterns and concerns
 3. Visual explanation of complex architectural changes (feat. Nano Banana Pro)
 
+## Sample output
+
+For a representative example, take a look at this PR comment: https://github.com/pbakaus/code-review-assistant/pull/1#issuecomment-3568698430
+
 ## How to Use
 
 ### Setup
