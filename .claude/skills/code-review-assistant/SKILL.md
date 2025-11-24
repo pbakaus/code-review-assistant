@@ -31,7 +31,7 @@ If `gh` not installed: https://cli.github.com/
    - If any patterns match the diff, grep the full details from `code-standards.md` using the XML tag
    - Flag by severity (🔴🟡🔵)
 
-3. **Visual Explanations**: If actual architecture has changed (webhooks, state flows, I/O etc), run:
+3. **Visual Explanations**: Unless none or only minor code changes, run:
    - `node scripts/generate-diagram.js "<description>"` 
    - `node scripts/upload-image.js <file>` → Cloudinary URL
    - Include as `![](url)` in review
@@ -41,6 +41,9 @@ If `gh` not installed: https://cli.github.com/
 ```markdown
 ## 🤖 Claude PR Assessment
 
+## 🎨 Visual Explanation
+![](url) - Description (don't include if minimal code changes)
+
 ## 👥 Recommended Reviewers
 - **@username** (Name) - Expertise areas that match this PR
 
@@ -48,9 +51,6 @@ If `gh` not installed: https://cli.github.com/
 - 🔴/🟡/🔵 **Matched code standard pattern title**
   - Files it occurs in, optional 3-5 line snippets and aggregated explanation
   - Concise recommended solution
-
-## 🎨 Visual Explanations
-![](url) - Description (only if architecture changed)
 
 ## ✅ Overall Assessment
 Strengths, changes needed, recommendation
