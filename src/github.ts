@@ -42,27 +42,27 @@ export class GitHubClient {
 			{
 				regex: /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/,
 				parse: (m: RegExpMatchArray) => ({
-					owner: m[1]!,
-					repo: m[2]!,
-					number: Number.parseInt(m[3]!, 10),
+					owner: m[1] as string,
+					repo: m[2] as string,
+					number: Number.parseInt(m[3] as string, 10),
 				}),
 			},
 			// Shorthand: owner/repo#123
 			{
 				regex: /^([^/]+)\/([^#]+)#(\d+)$/,
 				parse: (m: RegExpMatchArray) => ({
-					owner: m[1]!,
-					repo: m[2]!,
-					number: Number.parseInt(m[3]!, 10),
+					owner: m[1] as string,
+					repo: m[2] as string,
+					number: Number.parseInt(m[3] as string, 10),
 				}),
 			},
 			// Alternative shorthand: owner/repo/pull/123
 			{
 				regex: /^([^/]+)\/([^/]+)\/pull\/(\d+)$/,
 				parse: (m: RegExpMatchArray) => ({
-					owner: m[1]!,
-					repo: m[2]!,
-					number: Number.parseInt(m[3]!, 10),
+					owner: m[1] as string,
+					repo: m[2] as string,
+					number: Number.parseInt(m[3] as string, 10),
 				}),
 			},
 		];

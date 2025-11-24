@@ -59,22 +59,21 @@ If `gh` not installed: https://cli.github.com/
 
 ## Post-Review Actions
 
-After presenting the review summary, ask the user if they want to:
+**In Claude Code (standalone mode)**: After presenting the review, you can offer to:
 
-1. **Auto-assign reviewers** (if PR number/URL is available):
+1. **Auto-assign reviewers**:
    ```bash
    gh pr edit <number> --add-reviewer username1,username2,username3
    ```
    Use the GitHub usernames from the recommended reviewers list.
-   Reference: https://cli.github.com/manual/gh_pr_edit
 
-2. **Post review as PR comment** (if PR number/URL is available):
+2. **Post review as PR comment**:
    ```bash
    gh pr comment <number> --body-file <review-file.md>
    ```
    Save the full review markdown to a temporary file first, then post it.
 
-**Important**: Only offer these actions if you have the PR number or URL available. Ask for user confirmation before executing either command.
+**In Agent SDK mode**: Simply present the review. The agent doesn't support interactive prompts yet.
 
 ## Reference Files
 

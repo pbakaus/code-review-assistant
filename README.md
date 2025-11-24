@@ -34,12 +34,13 @@ Required API keys:
 ### 2. Run
 
 ```bash
-# Review a public PR
-npm start -- --pr "facebook/react#28000"
-
-# Review and post comment (use with caution!)
-npm start -- --pr "owner/repo#123" --post-comment
+# Review a PR (simple!)
+./agent facebook/react#28000
+./agent owner/repo#123
+./agent https://github.com/owner/repo/pull/123
 ```
+
+The agent will stream the review in real-time, then display the full review at the end.
 
 ## Project Structure
 
@@ -88,12 +89,12 @@ Claude will automatically:
 - Fetch PR using GitHub CLI
 - Analyze changes against your team's standards
 - Generate diagrams for complex logic
-- Offer to auto-assign reviewers via `gh pr edit`
-- Offer to post review comment to GitHub via `gh pr comment`
+- In Claude Code: Offer to auto-assign reviewers and post comments
+- In Agent SDK: Simply present the review (no interactive prompts yet)
 
 ### Mode 2: Programmatic with Agent SDK
 
-Perfect for automation and CI/CD:
+Perfect for automation and CI/CD. The agent automatically loads skills from the filesystem using `settingSources`:
 
 ```typescript
 import { query } from '@anthropic-ai/claude-agent-sdk';
@@ -101,16 +102,16 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
 for await (const message of query({
   prompt: `Review this PR: ${prData}`,
   options: {
-    plugins: [{ 
-      type: 'local', 
-      path: './.claude/skills/code-review-assistant' 
-    }],
+    settingSources: ["user", "project"], // Load skills from filesystem
+    allowedTools: ["Skill", "Bash", "Read", "Write", "Grep", "Glob", "WebFetch"],
     model: 'claude-sonnet-4-20250514'
   }
 })) {
   console.log(message);
 }
 ```
+
+**Note**: The `allowed-tools` field in SKILL.md frontmatter is ignored by the SDK - you must specify `allowedTools` in the SDK configuration instead. See the [official skills documentation](https://platform.claude.com/docs/en/agent-sdk/skills) for details.
 
 ## Customization
 
@@ -135,40 +136,40 @@ The skill offers interactive post-review actions powered by [GitHub CLI](https:/
 
 ### Auto-Assign Reviewers
 
-After the review, the skill will ask if you want to automatically assign the recommended reviewers:
+**In Claude Code**: After the review, the skill will ask if you want to automatically assign the recommended reviewers:
 
 ```bash
 gh pr edit <number> --add-reviewer username1,username2,username3
 ```
 
-This uses the GitHub usernames from your `team-expertise.md` file and the reviewer recommendations.
+This uses the GitHub usernames from your `team-expertise.md` file.
 
 ### Post Review as Comment
 
-The skill can also post the full review as a PR comment:
+**In Claude Code**: The skill can also post the full review as a PR comment:
 
 ```bash
 gh pr comment <number> --body-file review.md
 ```
 
-This makes the review visible to the entire team directly on GitHub.
-
-**Note**: Both actions require GitHub CLI to be installed and authenticated. The skill will only offer these options when a PR number is available.
+**Note**: The Agent SDK mode doesn't support interactive prompts yet, so it will only display the review without offering these actions.
 
 ## Development
 
 ```bash
+# Run the agent
+./agent "owner/repo#123"
+
 # Run in dev mode (with watch)
-npm run dev -- --pr "owner/repo#123"
+npm run dev
 
-# Build
+# Build TypeScript
 npm run build
-
-# Run tests
-npm start -- --pr "facebook/react#28000"
 ```
 
 ## CI/CD Integration Example
+
+**Note**: For CI/CD, the agent will automatically run without interactive prompts:
 
 ```yaml
 name: Auto Review
@@ -183,7 +184,7 @@ jobs:
         with:
           node-version: '18'
       - run: npm install
-      - run: npm start -- --pr "${{ github.repository }}#${{ github.event.pull_request.number }}" --post-comment
+      - run: ./agent "${{ github.repository }}#${{ github.event.pull_request.number }}"
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

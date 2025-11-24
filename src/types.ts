@@ -21,25 +21,3 @@ export interface PRFile {
 	patch?: string;
 }
 
-export interface CLIOptions {
-	pr: string;
-	postComment: boolean;
-	help: boolean;
-}
-
-export interface ReviewResult {
-	summary: string;
-	reviewers: string[];
-	concerns: string[];
-	visualExplanations: string[];
-	assessment: string;
-}
-
-// Agent SDK message types
-export interface AgentMessage {
-	type: string;
-	text?: string;
-	name?: string;
-	error?: string;
-}
-
