@@ -16,25 +16,30 @@ import { markedTerminal } from "marked-terminal";
 import { extractReviewers, formatPRForAgent, GitHubClient } from "./github.js";
 
 config();
-marked.use(markedTerminal() as MarkedExtension);
+marked.use(markedTerminal({
+	reflowText: true,
+	tab: 2
+}) as MarkedExtension);
 
 const args = process.argv.slice(2);
 const prIdentifier = args.find((arg) => !arg.startsWith("--"));
 const isInteractive = !args.includes("--non-interactive");
+const forceDiagrams = args.includes("--force-diagrams");
 
 if (!prIdentifier || args.some((arg) => ["-h", "--help"].includes(arg))) {
 	console.log(`
 Code Review Agent
 
-Usage: ./agent <pr-identifier> [--non-interactive]
+Usage: ./agent <pr-identifier> [options]
 
 Examples:
   ./agent facebook/react#12345
   ./agent owner/repo#123 --non-interactive
-  ./agent https://github.com/owner/repo/pull/123
+  ./agent https://github.com/owner/repo/pull/123 --force-diagrams
 
 Options:
   --non-interactive    Skip prompts (for CI/CD)
+  --force-diagrams     Always generate visual diagrams
   -h, --help          Show this help
 `);
 	process.exit(prIdentifier ? 0 : 1);
@@ -50,7 +55,8 @@ Use the code-review-assistant skill to:
 
 Be thorough but concise. Focus on actionable feedback.
 
-IMPORTANT: Do NOT ask about auto-assigning reviewers or posting comments.
+IMPORTANT: ${forceDiagrams ? "ALWAYS generate visual diagrams for this PR, regardless of complexity." : ""}
+Do NOT ask about auto-assigning reviewers or posting comments.
 The agent handles these actions. Simply present the final review.`;
 
 async function main() {
@@ -88,7 +94,7 @@ async function main() {
 		},
 	})) {
 		if (
-			(message.type === "assistant" || message.type === "user") &&
+			(message.type === "assistant") &&
 			message.message
 		) {
 			const content = message.message.content.find(
@@ -96,7 +102,7 @@ async function main() {
 			);
 			if (content && "text" in content) {
 				const text = (content as { text: string }).text;
-				if (!text.includes("## 📋 PR Summary")) {
+				if (!text.includes("## 🤖 Claude PR Assessment")) {
 					process.stdout.write(text.endsWith("\n") ? text : text + "\n");
 				}
 			}
@@ -109,7 +115,7 @@ async function main() {
 
 	if (!fullReview) return;
 
-	const summaryStart = fullReview.indexOf("## 📋 PR Summary");
+	const summaryStart = fullReview.indexOf("## 🤖 Claude PR Assessment");
 	const review =
 		summaryStart !== -1 ? fullReview.substring(summaryStart) : fullReview;
 

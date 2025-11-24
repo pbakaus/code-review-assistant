@@ -1,6 +1,6 @@
 ---
 name: code-review-assistant
-description: Analyze pull requests with intelligent reviewer assignment, code quality detection, and visual explanations. Use this skill when the user asks to review, analyze, or evaluate a PR, code changes, or pull request. Automatically identifies the right reviewers, flags potential issues against coding standards, and generates architectural diagrams for complex changes.
+description: Analyzes PRs to assign expert reviewers, detect code issues, and generate architectural diagrams. Use for PR reviews, code analysis, pull requests, git diffs, or mentions of reviewers, code quality, or standards.
 allowed-tools: [Bash, Read, Write, Grep, Glob, WebFetch]
 ---
 
@@ -10,7 +10,7 @@ Analyzes a pull request to assign reviewers, detect code issues, and visually ex
 
 **Setup**: Run `bash scripts/setup.sh` to check environment and install dependencies.
 
-## Getting PR Data
+## Get PR Data
 
 **If you have a diff and PR link provided:** Analyze that directly.
 
@@ -22,7 +22,7 @@ gh pr diff
 
 If `gh` not installed: https://cli.github.com/
 
-## Analysis Steps
+## Analysis
 
 1. **Assign Reviewers**: Read `reference/team-expertise.md`, match expertise areas to changes in the diff
 
@@ -50,10 +50,10 @@ If `gh` not installed: https://cli.github.com/
   - Concise recommended solution
 
 ## 🎨 Visual Explanations
-![Diagram](url) - Description (only if complex logic warrants it)
+![](url) - Description (only if architecture changed)
 
 ## ✅ Overall Assessment
-[Strengths, required changes, recommendation]
+Strengths, changes needed, recommendation
 ```
 
 ## Post-Review Actions
