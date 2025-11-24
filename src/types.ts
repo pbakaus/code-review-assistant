@@ -1,5 +1,5 @@
 /**
- * Type definitions for the review agent
+ * Type definitions for PR data
  */
 
 export interface PRData {
@@ -20,4 +20,3 @@ export interface PRFile {
 	changes: number;
 	patch?: string;
 }
-

@@ -208,7 +208,8 @@ jobs:
 - [Agent SDK Documentation](https://platform.claude.com/docs/en/agent-sdk/typescript)
 - [Agent Skills Guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 - [Skills Engineering Blog](https://anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
-- [GitHub Octokit](https://github.com/octokit/rest.js)
+- [GitHub CLI](https://cli.github.com/) - Used for reviewer assignment and posting comments
+- [GitHub Octokit](https://github.com/octokit/rest.js) - Used for fetching PR metadata
 
 ## License
 
