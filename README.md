@@ -34,13 +34,21 @@ Required API keys:
 ### 2. Run
 
 ```bash
-# Review a PR (simple!)
+# Interactive mode (default) - prompts for actions after review
 ./agent facebook/react#28000
 ./agent owner/repo#123
-./agent https://github.com/owner/repo/pull/123
+
+# Non-interactive mode (for CI/CD)
+./agent facebook/react#28000 --non-interactive
 ```
 
 The agent will stream the review in real-time, then display the full review at the end.
+
+**Interactive Mode** (default): After the review, you'll be prompted to:
+- Auto-assign the recommended reviewers via `gh pr edit`
+- Post the review as a PR comment via `gh pr comment`
+
+**Non-Interactive Mode**: Just displays the review and exits (perfect for CI/CD pipelines).
 
 ## Project Structure
 
@@ -89,8 +97,8 @@ Claude will automatically:
 - Fetch PR using GitHub CLI
 - Analyze changes against your team's standards
 - Generate diagrams for complex logic
-- In Claude Code: Offer to auto-assign reviewers and post comments
-- In Agent SDK: Simply present the review (no interactive prompts yet)
+- Offer to auto-assign reviewers via `gh pr edit`
+- Offer to post the review as a comment via `gh pr comment`
 
 ### Mode 2: Programmatic with Agent SDK
 
@@ -110,6 +118,8 @@ for await (const message of query({
   console.log(message);
 }
 ```
+
+**Agent behavior**: The agent's system prompt overrides the skill's post-review actions, so it will simply present the final review without offering to assign reviewers or post comments.
 
 **Note**: The `allowed-tools` field in SKILL.md frontmatter is ignored by the SDK - you must specify `allowedTools` in the SDK configuration instead. See the [official skills documentation](https://platform.claude.com/docs/en/agent-sdk/skills) for details.
 
@@ -132,27 +142,20 @@ The skill adapts to different technologies:
 
 ## Interactive Features
 
-The skill offers interactive post-review actions powered by [GitHub CLI](https://cli.github.com/manual/gh_pr_edit):
+### Agent Mode (via ./agent)
 
-### Auto-Assign Reviewers
+When running the agent **interactively** (without `--non-interactive`), it will prompt you after the review:
 
-**In Claude Code**: After the review, the skill will ask if you want to automatically assign the recommended reviewers:
+1. **Auto-assign reviewers**: Assign the recommended reviewers using `gh pr edit`
+2. **Post review as comment**: Post the full review as a PR comment using `gh pr comment`
 
-```bash
-gh pr edit <number> --add-reviewer username1,username2,username3
-```
+Simply answer `y` or `N` to each prompt. The agent handles everything programmatically using GitHub CLI.
 
-This uses the GitHub usernames from your `team-expertise.md` file.
+### Claude Code Mode
 
-### Post Review as Comment
+When using the skill directly in Claude Code, it will also offer these post-review actions interactively.
 
-**In Claude Code**: The skill can also post the full review as a PR comment:
-
-```bash
-gh pr comment <number> --body-file review.md
-```
-
-**Note**: The Agent SDK mode doesn't support interactive prompts yet, so it will only display the review without offering these actions.
+Use `--non-interactive` flag with the agent to skip prompts (ideal for CI/CD pipelines).
 
 ## Development
 

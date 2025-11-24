@@ -31,7 +31,7 @@ If `gh` not installed: https://cli.github.com/
    - If any patterns match the diff, grep the full details from `code-standards.md` using the XML tag
    - Flag by severity (🔴🟡🔵)
 
-3. **Visual Explanations**: If complex (webhooks, state flows, architecture), run:
+3. **Visual Explanations**: If actual architecture has changed (webhooks, state flows, I/O etc), run:
    - `node scripts/generate-diagram.js "<description>"` 
    - `node scripts/upload-image.js <file>` → Cloudinary URL
    - Include as `![](url)` in review
@@ -39,16 +39,15 @@ If `gh` not installed: https://cli.github.com/
 ### Output Format
 
 ```markdown
-## 📋 PR Summary
-[Title, author, files changed summary]
+## 🤖 Claude PR Assessment
 
 ## 👥 Recommended Reviewers
 - **@username** (Name) - Expertise areas that match this PR
 
 ## ⚠️ Areas of Concern
-- 🔴/🟡/🔵 **Issue Title**
-  - File and explanation
-  - Recommended solution
+- 🔴/🟡/🔵 **Matched code standard pattern title**
+  - Files it occurs in, optional 3-5 line snippets and aggregated explanation
+  - Concise recommended solution
 
 ## 🎨 Visual Explanations
 ![Diagram](url) - Description (only if complex logic warrants it)
@@ -59,13 +58,13 @@ If `gh` not installed: https://cli.github.com/
 
 ## Post-Review Actions
 
-**In Claude Code (standalone mode)**: After presenting the review, you can offer to:
+After presenting the review, offer to help with:
 
 1. **Auto-assign reviewers**:
    ```bash
    gh pr edit <number> --add-reviewer username1,username2,username3
    ```
-   Use the GitHub usernames from the recommended reviewers list.
+   Use the GitHub usernames (@username) from the recommended reviewers list.
 
 2. **Post review as PR comment**:
    ```bash
@@ -73,7 +72,7 @@ If `gh` not installed: https://cli.github.com/
    ```
    Save the full review markdown to a temporary file first, then post it.
 
-**In Agent SDK mode**: Simply present the review. The agent doesn't support interactive prompts yet.
+Ask the user if they'd like you to perform either of these actions.
 
 ## Reference Files
 
